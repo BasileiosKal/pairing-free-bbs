@@ -6,7 +6,7 @@ workgroup = "CFRG"
 
 [seriesInfo]
 name = "Internet-Draft"
-value = "draft-pairing-free-bbs"
+value = "draft-vasilis-pairing-free-bbs-latest"
 status = "informational"
 
 [[author]]
