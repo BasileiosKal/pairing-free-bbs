@@ -1,16 +1,11 @@
-# Internet-Draft Template Repository
+# Extended BBS Signatures
 
-Use this repository as a template if you want to start working on
-[IETF](https://www.ietf.org/) documents.
+A draft documentation for extending [BBS signatures](https://datatracker.ietf.org/doc/draft-looker-cfrg-bbs-signatures/) to reduce, or even remove, the needed pairing operations.
 
-[Read the
-instructions](https://github.com/martinthomson/i-d-template/blob/main/doc/TEMPLATE.md)
-for more information.
+[Editors Draft](https://basileioskal.github.io/pairing-free-bbs/draft-vasilis-pairing-free-bbs.html)
 
-Once you have created your own repository, start work by:
+## Building and Display
 
-1. Set "Workflow permissions" to "Read and write permissions"
-   [in the repository settings](../../settings/actions#actions_default_workflow_permissions_write).
+The files are includeed in HTML for easier reading and navigation. 
 
-2. Rename the `draft-todo-yourname-protocol.md` file
-   [here](../../edit/main/draft-todo-yourname-protocol.md).
+You can build the html files runing `make`. This requires [xml2rfc](https://author-tools.ietf.org/) and [mmark](https://github.com/mmarkdown/mmark) already installed. If you are on Windows, you will need to install and use [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/install) with a Linux distribution.
