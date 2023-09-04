@@ -23,15 +23,15 @@ organization = "MATTR"
 
 .# Abstract
 
-The BBS Signatures scheme defined in [@!I-D.irtf-cfrg-bbs-signatures], describes a pairing-based, multi-message signature scheme, that supports selectively disclosing the messages through unlinkable presentations, build using zero-knowledge proofs. This document describes 2 additional deployments of the BBS Signatures scheme, providing tradeoffs between signature and key size, to decreased need for pairing operations, providing that way verification efficiency and increased hardware support. To do so, it describes an extended signature generation and altered signature verification procedures, that use slightly larger keys and signatures, but avoid the need for pairing operations during signature verification. It then uses those procedures to build two different deployment models. The first, allows for publicly verifiable BBS proofs, in which case, there is a need for 2 pairing operations during the BBS zk-proof verification. In the second deployment model, BBS proofs are privately verifiable, which allows completely avoiding the need for pairings and pairing-friendly curves.
+The BBS Signatures scheme defined in [@!I-D.irtf-cfrg-bbs-signatures], describes a pairing-based, multi-message digital signature, that supports selectively disclosing the messages through unlinkable presentations, build using zero-knowledge proofs. This document describes 2 additional deployments of the BBS Signatures scheme, providing tradeoffs between signature and key size, to decreased need for pairing operations, providing that way verification efficiency and increased hardware support. To do so, it defines an extended signature generation and altered signature verification procedures, that use slightly larger keys and signatures, but avoid the need for pairing operations (during signature verification). It then uses those procedures to build two different deployment models. The first, allows for publicly verifiable BBS proofs, in which case, there is a need for 2 pairing operations during the BBS proof verification. In the second deployment model, BBS proofs are privately verifiable, which allows completely avoiding the need for pairings and pairing-friendly curves.
 
 {mainmatter}
 
 # Introduction
 
-BBS Signatures, originally described in the academic work by Dan Boneh, Xavier Boyen, and Hovav Shacham [@BBS04], is a signature scheme able to sign multiple messages at once, allowing for selectively disclosing those message while not revealing the signature it self. It does so by creating unlinkable, zero-knowledge proofs of the signature value on the disclosed set of messages.
+BBS Signatures, originally described in the academic work by Dan Boneh, Xavier Boyen, and Hovav Shacham [@BBS04], is a signature scheme able to sign multiple messages at once, allowing for selectively disclosing those message while not revealing the signature it self. It does so by creating unlinkable, zero-knowledge proofs-of-knowledge of a signature value on the disclosed set of messages.
 
-The scheme has had various works analyzing its security and improving its efficiency. The BBS scheme described in [@!I-D.irtf-cfrg-bbs-signatures] is based on the academic work [@CDL16], using the latest performance improvements from [@TZ23]. Those works, making use of pairing operations, achieve minimum key and signature sizes, while keeping key management complexity to a minimum. For a lot of use cases however, especially those requiring hardware support, the pairing operation are not viable. For example, a lot of the hardware security modulus do not have the necessary capabilities to compute the required pairings, or some curve operations taking place on the pairing-friendly curves.
+The scheme has had various works analyzing its security and improving its efficiency. The BBS scheme described in [@!I-D.irtf-cfrg-bbs-signatures] is based on the academic work [@CDL16], using the latest performance improvements from [@TZ23]. Those works, making use of pairing operations, achieve minimum key and signature sizes, while keeping key management complexity to a minimum. For a lot of use cases however, especially those requiring hardware support, the pairing operation are not viable. For example, a lot of the hardware security modulus do not have the necessary capabilities to compute the required pairings, or execute some curve operations taking place on the pairing-friendly curves.
 
 To that end, this document, based on [@BBDT16], extends the BBS signature and public keys defined in the BBS document, making it possible to validate a BBS signature without using any pairings. This would allow the signature verification operation to happen inside secure hardware, which in turn means that the signature does not have to move to the less secure application layer, endangering the user's security and privacy.
 
@@ -149,13 +149,13 @@ This document describes 2 different deployments of BBS Signatures, one for publi
 
 ## Public Keys
 
-Depending on the deployment used (i.e., either for publicly or privately verifiable BBS proofs), the Signer's public key will be different. More specifically, in the publicly verifiable BBS proofs deployment, the Signer's public key will consist of 2 points, one in G1 and one in G2 (note that the publicly verifiable BBS proofs deployment requires pairing-friendly curves and the G1 and G2 subgroups, see (#notation)). The encoding of the public key in that case will be the concatenation of the encodings of the 2 points, i.e., `encoded_point_of_g1 || encoded_point_of_g2`. The purpose of the 2 points is different. The point of G1 is used to verify the extended BBS signature (using the alternative signature verification operation described by this document in (#pairing-free-signature-verification)). The point of G2 is used to verify the BBS proof. To avoid miss use, this document treats those 2 points as 1 public key, meaning that both signature and proof verification require knowledge of both points. On the other hand, in the privately verifiable BBS proofs deployment, the Signer's public key will comprise from just a point of G1.
+Depending on the deployment used (i.e., either for publicly or privately verifiable BBS proofs), the Signer's public key will be different. More specifically, in the publicly verifiable BBS proofs deployment, the Signer's public key will consist of 2 points, one in G1 and one in G2 (note that the publicly verifiable BBS proofs deployment requires pairing-friendly curves with the G1 and G2 subgroups, see (#notation)). The encoding of the public key in that case will be the concatenation of the encodings of the 2 points, i.e., `encoded_point_of_g1 || encoded_point_of_g2`. The purpose of the 2 points is different. The point of G1 is used to verify the extended BBS signature (using the alternative, pairing-free signature verification operation described by this document in (#pairing-free-signature-verification)). The point of G2 is used to verify the BBS proof. To avoid misuse, this document treats those 2 points as 1 public key, meaning that both signature and proof verification require knowledge of both points. On the other hand, in the privately verifiable BBS proofs deployment, the Signer's public key will comprise from just a point of G1, used by the Prover to validate the received BBS signature.
 
 # Scheme Definition
 
 This section defines the extended signature generation and alternative, pairing-free, signature verification operations. It also describes the proper use of the proof generation operation defined in [Section 3.4.3](https://www.ietf.org/archive/id/draft-irtf-cfrg-bbs-signatures-03.html#name-proof-generation-proofgen) of [@!I-D.irtf-cfrg-bbs-signatures], as to work with the extended signature defined by this document.
 
-Note that the public key generation operation is described as part of each specific deployment, defined in (#deployments) (see (#public-keys)). As such, the size of the public key is deployment dependant, hence, ciphersuite specific (see (#deployments-and-ciphersuites)). Each of the operations MUST check that the received public key (PK), has a length consistent with the specific deployment and ciphersuite.
+Note that the public key calculation operation is described as part of each specific deployment, defined in (#deployments) (see (#public-keys)). As such, the size of the public key is deployment dependant, hence, ciphersuite specific (see (#deployments-and-ciphersuites)). Each of the operations MUST check that the received public key (PK), has a length consistent with the specific deployment and ciphersuite.
 
 This section uses the following operations defined in [@!I-D.irtf-cfrg-bbs-signatures]:
 - `hash_to_scalar` is defined in [Section 4.4](https://www.ietf.org/archive/id/draft-irtf-cfrg-bbs-signatures-03.html#name-hash-to-scalar).
@@ -165,7 +165,7 @@ This section uses the following operations defined in [@!I-D.irtf-cfrg-bbs-signa
 
 ## Signature Generation
 
-The ExtendedSign operation returns a BBS signature from a secret key (SK) and a public key (PK), over a header and a set of messages. It extends the `Sign` operation defined in [Section 3.4.1](https://www.ietf.org/archive/id/draft-irtf-cfrg-bbs-signatures-03.html#name-signature-generation-sign) of [@!I-D.irtf-cfrg-bbs-signatures], with 2 additional scalar values, allowing for signature verification without pairings.
+The `ExtendedSign` operation returns a BBS signature from a secret key (SK) and a public key (PK), over a header and a set of messages. It extends the `Sign` operation defined in [Section 3.4.1](https://www.ietf.org/archive/id/draft-irtf-cfrg-bbs-signatures-03.html#name-signature-generation-sign) of [@!I-D.irtf-cfrg-bbs-signatures], with 2 additional scalar values, allowing for signature verification without pairings.
 
 ```
 signature = ExtendedSign(SK, PK, header, messages)
@@ -250,13 +250,14 @@ Deserialization:
 4.  if length(PK) != pubkey_size, return INVALID
 4.  PublicKeys = deserialize_public_keys(PK)
 5.  if PublicKeys is INVALID, return INVALID
+6.  if length(public_keys) is not 1 or 2, return INVALID
 
-6.  PK_1 = PublicKeys[0]
-7.  W = octets_to_pubkey_g1(PK_1)
-8.  if W is INVALID, return INVALID
+7.  PK_1 = PublicKeys[0]
+8.  W = octets_to_pubkey_g1(PK_1)
+9.  if W is INVALID, return INVALID
 
-9.  L = length(messages)
-10. (msg_1, ..., msg_L) = messages
+10.  L = length(messages)
+11. (msg_1, ..., msg_L) = messages
 
 Procedure:
 
@@ -340,7 +341,7 @@ The distinguishing factor for the two described deployments will be the public k
 
 ## Publicly Verifiable BBS Proofs
 
-This section describes a public key generation and a proof verification procedures, which together with the secret key generation operation defined in [Section 3.1.1](https://identity.foundation/bbs-signature/draft-irtf-cfrg-bbs-signatures.html#name-secret-key) of [@!I-D.irtf-cfrg-bbs-signatures], and the operations defined in (#scheme-definition), allow for a BBS Signature deployment that uses pairings to support publicly verifiable BBS proofs (only during proof verification). Note that this deployment requires the use of pairing-friendly curves.
+This section describes a public key generation and a proof verification procedures, which together with the secret key generation operation defined in [Section 3.1.1](https://identity.foundation/bbs-signature/draft-irtf-cfrg-bbs-signatures.html#name-secret-key) of [@!I-D.irtf-cfrg-bbs-signatures], and the operations defined in (#scheme-definition), allow for a BBS Signature deployment that uses pairings during proof verification, to support publicly verifiable BBS proofs. Note that this deployment requires the use of pairing-friendly curves.
 
 ### Public Keys Generation
 
@@ -411,13 +412,13 @@ Deserialization:
 4.  if length(PK) != pubkey_size, return INVALID
 5.  public_keys = deserialize_public_keys(PK)
 6.  if public_keys is INVALID, return INVALID
+7.  if length(public_keys) != 2, return INVALID
+8.  PK_2 = public_keys[2]
+9.  W = octets_to_pubkey_g2(PK_2)
+10. if W is INVALID, return INVALID
 
-7.  PK_2 = public_keys[1]
-8.  W = octets_to_pubkey_g2(PK_2)
-9.  if W is INVALID, return INVALID
-
-10. (i1, ..., iR) = disclosed_indexes
-11. msg_scalars = messages_to_scalars(messages)
+11. (i1, ..., iR) = disclosed_indexes
+12. msg_scalars = messages_to_scalars(messages)
 
 Procedure:
 
